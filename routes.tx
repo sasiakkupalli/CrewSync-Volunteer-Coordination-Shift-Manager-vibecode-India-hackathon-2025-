@@ -1,0 +1,355 @@
+import type { Express } from "express";
+import { createServer, type Server } from "http";
+import { storage } from "./storage";
+import { 
+  insertEventSchema, insertVolunteerSchema, insertDutySchema, 
+  insertShiftSchema, insertAssignmentSchema 
+} from "@shared/schema";
+
+export async function registerRoutes(app: Express): Promise<Server> {
+  // Events
+  app.get("/api/events", async (req, res) => {
+    try {
+      const events = await storage.getEvents();
+      res.json(events);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch events" });
+    }
+  });
+
+  app.get("/api/events/:id", async (req, res) => {
+    try {
+      const event = await storage.getEvent(parseInt(req.params.id));
+      if (!event) {
+        return res.status(404).json({ message: "Event not found" });
+      }
+      res.json(event);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch event" });
+    }
+  });
+
+  app.post("/api/events", async (req, res) => {
+    try {
+      const validatedData = insertEventSchema.parse(req.body);
+      const event = await storage.createEvent(validatedData);
+      res.status(201).json(event);
+    } catch (error) {
+      res.status(400).json({ message: "Invalid event data" });
+    }
+  });
+
+  app.patch("/api/events/:id", async (req, res) => {
+    try {
+      const event = await storage.updateEvent(parseInt(req.params.id), req.body);
+      if (!event) {
+        return res.status(404).json({ message: "Event not found" });
+      }
+      res.json(event);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to update event" });
+    }
+  });
+
+  app.delete("/api/events/:id", async (req, res) => {
+    try {
+      const deleted = await storage.deleteEvent(parseInt(req.params.id));
+      if (!deleted) {
+        return res.status(404).json({ message: "Event not found" });
+      }
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ message: "Failed to delete event" });
+    }
+  });
+
+  // Volunteers
+  app.get("/api/volunteers", async (req, res) => {
+    try {
+      const volunteers = await storage.getVolunteers();
+      res.json(volunteers);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch volunteers" });
+    }
+  });
+
+  app.get("/api/volunteers/:id", async (req, res) => {
+    try {
+      const volunteer = await storage.getVolunteer(parseInt(req.params.id));
+      if (!volunteer) {
+        return res.status(404).json({ message: "Volunteer not found" });
+      }
+      res.json(volunteer);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch volunteer" });
+    }
+  });
+
+  app.post("/api/volunteers", async (req, res) => {
+    try {
+      const validatedData = insertVolunteerSchema.parse(req.body);
+      const volunteer = await storage.createVolunteer(validatedData);
+      res.status(201).json(volunteer);
+    } catch (error) {
+      res.status(400).json({ message: "Invalid volunteer data" });
+    }
+  });
+
+  app.patch("/api/volunteers/:id", async (req, res) => {
+    try {
+      const volunteer = await storage.updateVolunteer(parseInt(req.params.id), req.body);
+      if (!volunteer) {
+        return res.status(404).json({ message: "Volunteer not found" });
+      }
+      res.json(volunteer);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to update volunteer" });
+    }
+  });
+
+  app.delete("/api/volunteers/:id", async (req, res) => {
+    try {
+      const deleted = await storage.deleteVolunteer(parseInt(req.params.id));
+      if (!deleted) {
+        return res.status(404).json({ message: "Volunteer not found" });
+      }
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ message: "Failed to delete volunteer" });
+    }
+  });
+
+  // Duties
+  app.get("/api/duties", async (req, res) => {
+    try {
+      const { eventId } = req.query;
+      let duties;
+      if (eventId) {
+        duties = await storage.getDutiesByEvent(parseInt(eventId as string));
+      } else {
+        duties = await storage.getDuties();
+      }
+      res.json(duties);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch duties" });
+    }
+  });
+
+  app.post("/api/duties", async (req, res) => {
+    try {
+      const validatedData = insertDutySchema.parse(req.body);
+      const duty = await storage.createDuty(validatedData);
+      res.status(201).json(duty);
+    } catch (error) {
+      res.status(400).json({ message: "Invalid duty data" });
+    }
+  });
+
+  app.patch("/api/duties/:id", async (req, res) => {
+    try {
+      const duty = await storage.updateDuty(parseInt(req.params.id), req.body);
+      if (!duty) {
+        return res.status(404).json({ message: "Duty not found" });
+      }
+      res.json(duty);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to update duty" });
+    }
+  });
+
+  app.delete("/api/duties/:id", async (req, res) => {
+    try {
+      const deleted = await storage.deleteDuty(parseInt(req.params.id));
+      if (!deleted) {
+        return res.status(404).json({ message: "Duty not found" });
+      }
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ message: "Failed to delete duty" });
+    }
+  });
+
+  // Shifts
+  app.get("/api/shifts", async (req, res) => {
+    try {
+      const { eventId } = req.query;
+      let shifts;
+      if (eventId) {
+        shifts = await storage.getShiftsByEvent(parseInt(eventId as string));
+      } else {
+        shifts = await storage.getShifts();
+      }
+      res.json(shifts);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch shifts" });
+    }
+  });
+
+  app.post("/api/shifts", async (req, res) => {
+    try {
+      const validatedData = insertShiftSchema.parse(req.body);
+      const shift = await storage.createShift(validatedData);
+      res.status(201).json(shift);
+    } catch (error) {
+      res.status(400).json({ message: "Invalid shift data" });
+    }
+  });
+
+  app.patch("/api/shifts/:id", async (req, res) => {
+    try {
+      const shift = await storage.updateShift(parseInt(req.params.id), req.body);
+      if (!shift) {
+        return res.status(404).json({ message: "Shift not found" });
+      }
+      res.json(shift);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to update shift" });
+    }
+  });
+
+  app.delete("/api/shifts/:id", async (req, res) => {
+    try {
+      const deleted = await storage.deleteShift(parseInt(req.params.id));
+      if (!deleted) {
+        return res.status(404).json({ message: "Shift not found" });
+      }
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ message: "Failed to delete shift" });
+    }
+  });
+
+  // Assignments
+  app.get("/api/assignments", async (req, res) => {
+    try {
+      const { volunteerId, shiftId } = req.query;
+      let assignments;
+      if (volunteerId) {
+        assignments = await storage.getAssignmentsByVolunteer(parseInt(volunteerId as string));
+      } else if (shiftId) {
+        assignments = await storage.getAssignmentsByShift(parseInt(shiftId as string));
+      } else {
+        assignments = await storage.getAssignments();
+      }
+      res.json(assignments);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch assignments" });
+    }
+  });
+
+  app.post("/api/assignments", async (req, res) => {
+    try {
+      const validatedData = insertAssignmentSchema.parse(req.body);
+      const assignment = await storage.createAssignment(validatedData);
+      res.status(201).json(assignment);
+    } catch (error) {
+      res.status(400).json({ message: "Invalid assignment data" });
+    }
+  });
+
+  app.patch("/api/assignments/:id", async (req, res) => {
+    try {
+      const assignment = await storage.updateAssignment(parseInt(req.params.id), req.body);
+      if (!assignment) {
+        return res.status(404).json({ message: "Assignment not found" });
+      }
+      res.json(assignment);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to update assignment" });
+    }
+  });
+
+  app.delete("/api/assignments/:id", async (req, res) => {
+    try {
+      const deleted = await storage.deleteAssignment(parseInt(req.params.id));
+      if (!deleted) {
+        return res.status(404).json({ message: "Assignment not found" });
+      }
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ message: "Failed to delete assignment" });
+    }
+  });
+
+  // Dashboard stats
+  app.get("/api/dashboard/stats", async (req, res) => {
+    try {
+      const events = await storage.getEvents();
+      const volunteers = await storage.getVolunteers();
+      const assignments = await storage.getAssignments();
+      const shifts = await storage.getShifts();
+
+      const activeEvents = events.filter(e => e.status === "active").length;
+      const totalVolunteers = volunteers.length;
+      const checkedInAssignments = assignments.filter(a => a.status === "checked_in");
+      const hoursScheduled = shifts.reduce((total, shift) => {
+        const hours = (new Date(shift.endTime).getTime() - new Date(shift.startTime).getTime()) / (1000 * 60 * 60);
+        return total + hours;
+      }, 0);
+      const attendanceRate = assignments.length > 0 
+        ? Math.round((checkedInAssignments.length / assignments.length) * 100)
+        : 0;
+
+      res.json({
+        activeEvents,
+        totalVolunteers,
+        hoursScheduled: Math.round(hoursScheduled),
+        attendanceRate,
+      });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch dashboard stats" });
+    }
+  });
+
+  // Extended volunteer data with assignments
+  app.get("/api/volunteers-with-assignments", async (req, res) => {
+    try {
+      const volunteers = await storage.getVolunteers();
+      const assignments = await storage.getAssignments();
+      const shifts = await storage.getShifts();
+      const duties = await storage.getDuties();
+
+      const volunteersWithAssignments = volunteers.map(volunteer => {
+        const volunteerAssignments = assignments.filter(a => a.volunteerId === volunteer.id);
+        const currentAssignment = volunteerAssignments.find(a => 
+          a.status === "checked_in" || a.status === "break"
+        );
+
+        let currentDuty = null;
+        let shiftTime = null;
+        
+        if (currentAssignment) {
+          const shift = shifts.find(s => s.id === currentAssignment.shiftId);
+          const duty = duties.find(d => d.id === shift?.dutyId);
+          currentDuty = duty?.name || "Unknown";
+          if (shift) {
+            const start = new Date(shift.startTime);
+            const end = new Date(shift.endTime);
+            shiftTime = `${start.toLocaleTimeString('en-US', { 
+              hour: 'numeric', 
+              minute: '2-digit' 
+            })} - ${end.toLocaleTimeString('en-US', { 
+              hour: 'numeric', 
+              minute: '2-digit' 
+            })}`;
+          }
+        }
+
+        return {
+          ...volunteer,
+          currentDuty,
+          shiftTime,
+          status: currentAssignment?.status || "available",
+        };
+      });
+
+      res.json(volunteersWithAssignments);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch volunteers with assignments" });
+    }
+  });
+
+  const httpServer = createServer(app);
+  return httpServer;
+}
+
